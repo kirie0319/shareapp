@@ -17,3 +17,5 @@ Route::delete('/like', [LikeController::class, 'destroy']);
 Route::get('/like/count', [LikeController::class, 'countlikes']);
 Route::get('/like', [LikeController::class, 'haslike']);
 
+Route::post('/comment', [CommentController::class, 'store']);
+Route::get('/comment', [CommentController::class, 'show']);

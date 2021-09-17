@@ -10,9 +10,10 @@ class LikeController extends Controller
     public function store(Request $request)
     {
         $post = Post::find($request->post_id);
+        $post->users()->attach($request->user_id);
         $count = $post->users()->count();
         $result = true;
-        return resonse()->json([
+        return response()->json([
             'result' => $result,
             'count' => $count,
         ], 201);
@@ -20,9 +21,10 @@ class LikeController extends Controller
     public function destroy(Request $request)
     {
         $post = Post::find($request->post_id);
+        $post->users()->detach($request->user_id);
         $count = $post->users()->count();
         $result = false;
-        return resonse()->json([
+        return response()->json([
             'result' => $result,
             'count' => $count,
         ], 201);
