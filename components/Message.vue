@@ -1,12 +1,11 @@
 <template>
-<div class="post">
-      <h1 class="post--txt post--border">ホーム</h1>
+<div>
       <div v-for="(item, index) in postLists" :key="item.id" class="post--border post__content">
         <h2 class="post__content--txt">{{item.user_name}}</h2>
         <img @click="like(item, index)" class="post__content--img" src="../static/img/heart.png">
-        <p class="post__good">{{item.post_count}}</p>
-        <img @click="deleteShare(item.id, index)" class="post__content--img" src="../static/img/cross.png">
-        <img class="post__content--img space" src="../static/img/detail.png" @click="$router.push({path: '/comment/' + item.id, params: { id: item.id }, })" v-if="$route.name === 'index'">
+        <p class="post__good">{{item.like_count}}</p>
+        <img @click="deletePost(item.id, index)" class="post__content--img" src="../static/img/cross.png">
+        <img class="post__content--img space" src="../static/img/detail.png" @click="$router.push({path: '/comments/' + item.id, params: { id: item.id }, })" v-if="$route.name === 'index'">
         <p class="post__content--detail">{{item.post}}</p>
       </div>
 </div>

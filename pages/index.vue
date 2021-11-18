@@ -1,7 +1,10 @@
 <template>
   <div class="container background home">
     <SideNavi @getPost="getData" />
-    <Message :postLists="postLists" :uid="uid" />
+    <div class="post">
+      <h1 class="post--txt post--border">ホーム</h1>
+      <Message :postLists="postLists" :uid="uid" />
+    </div>
   </div>
 </template>
 
@@ -31,9 +34,9 @@ export default {
             },
           }
         );
-        console.log(likeCountData);
         postLists[i].like_count = likeCountData.data.count;
       }
+      console.log(postLists);
       return postLists;
     },
 

@@ -1,38 +1,17 @@
 <template>
   <div class="container background home">
-    <div class="home__common">
-      <img class="header_logo" src="../../static/img/logo.png">
-      <div class="home--link">
-        <NuxtLink to="/"><img class="home--img" src="../../static/img/home.png"></NuxtLink>
-        <NuxtLink to="/" class="home--txt">ホーム</NuxtLink>
-      </div>
-      <div class="home--link">
-        <img @click="logout" class="home--img" src="../../static/img/logout.png">
-        <button @click="logout" class="home--txt">ログアウト</button>
-      </div>
-      <div class="share__block">
-        <label for="share" class="share--txt">シェア</label>
-        <textarea id="share" name="post" v-model="newPost" row="10" cols="44" class="share--area"></textarea>
-        <button @click="share" class="share--btn">シェアする</button>
-      </div>
-    </div>
+    <SideNavi />
     <div class="post">
       <h1 class="post--txt post--border">コメント</h1>
-      <div class="post--border post__content">
-        <h2 v-if="postLists.actor" class="post__content--txt">{{postLists.actor.name}}</h2>
-        <img v-if="postLists.id" class="post__content--img" src="../../static/img/heart.png">
-        <p class="post__good">0</p>
-        <NuxtLink to="/comments/:id?"><img v-if="postLists.id" @click="deleteShare(postLists.id)" class="post__content--img" src="../../static/img/cross.png"></NuxtLink>
-        <p class="post__content--detail">{{postLists.post}}</p>
-      </div>
+    <Message :postLists="postLists" :uid="uid" />
       <h2 class="post--border comment--txt">コメント</h2>
       <div v-for="item in commentLists" :key="item.id" class="post--border">
-        <p class="comment--content">{{item.actor.name}}</p>
+        <p class="comment--content">{{item.user_name}}</p>
         <p class="comment--content">{{item.comment}}</p>
       </div>
       <div class="comment">
         <textarea name="comment" v-model="newComment" row="10" cols="44" class="comment--area"></textarea>
-        <button @click="comment" class="comment--btn">コメント</button>
+        <button @click="postComment" class="comment--btn">コメント</button>
       </div>
     </div>
   </div>
@@ -42,67 +21,76 @@
 import firebase from '~/plugins/firebase'
 export default {
   data() {
-    return{
-      newPost: null,
-      postLists: {},
+    return {
+      postLists: [],
       uid: null,
       newComment: null,
       commentLists: [],
-    }
+    };
   },
    methods: {
-    logout() {
-      firebase
-        .auth()
-        .signOut()
-        .then(() => {
-          alert('ログアウトが完了しました')
-          this.$router.replace('/login')
-        })
-    },
-    async getPost() {
+    async getPostAndCommentData() {
       const resData = await this.$axios.get(
-        "http://127.0.0.1:8000/api/post/" + this.$route.params.id
+        "http://127.0.0.1:8000/api/comment/", 
+        {
+          params: {
+            post_id: this.$route.params.id,
+          },
+        }
       );
-      this.postLists = resData.data.data;
+      console.log(resData);
+      const post = resData.data.data;
+      return post;
     },
-    async getComment() {
-      const commentData = await this.$axios.get(
-      "http://127.0.0.1:8000/api/comment"
+    async getLikeCount(post) {
+      const { data } = await this.$axios.get(
+        "http://localhost:8000/api/like/count",
+        {
+          params: {
+            post_id: post.id,
+          },
+        }
       );
-      this.commentLists = commentData.data.data;
+      post.like_count = data.count;
+      return post;
     },
-    async share() {
-      const sendData = {
-        post: this.newPost,
-        actor_id: this.uid
-      };
-      await this.$axios.post("http://127.0.0.1:8000/api/post/", sendData);
-      this.getPost();
+    async getHasLike(post) {
+      const { data } = await this.$axios.get(
+        "http://localhost:8000/api/like",
+        {
+          params: {
+            post_id: post.id,
+            user_id: this.uid,
+          },
+        }
+      );
+      post.has_like = data.result;
+      this.commentLists = post.comments;
+      this.postLists.push(post);
     },
-    async comment() {
-      const submitData = {
-        comment: this.newComment,
-        actor_id: this.uid,
-        post_id: this.postLists.id,
-      };
-      console.log(submitData);
-      await this.$axios.post("http://127.0.0.1:8000/api/comment/", submitData);
-      this.getComment();
+    getData() {
+      firebase.auth().onAuthStateChanged(async (user) => {
+        this.uid = user.uid;
+        let post = await this.getPostAndCommentData();
+        post = await this.getLikeCount(post);
+        await this.getHasLike(post);
+      });
     },
-    async deleteShare(id) {
-      await this.$axios.delete("http://127.0.0.1:8000/api/post/" + id);
-    }
+    async postComment() {
+      const { data } = await this.$axios.post(
+        "http://localhost:8000/api/comment",
+        {
+          post_id: this.postLists[0].id,
+          user_id: this.uid,
+          comment: this.newComment,
+        }
+      );
+      this.commentLists.push(data.data);
+      this.newComment = "";
+    },
   },
   created() {
-    firebase.auth().onAuthStateChanged((user) => {
-      if (user) {
-        this.uid = user.uid
-        this.message = 'ログイン済みです'
-      }
-    })
-    this.getPost();
-    this.getComment();
+    this.getData();
   },
 }
 </script>
