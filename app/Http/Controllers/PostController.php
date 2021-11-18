@@ -33,9 +33,9 @@ class PostController extends Controller
         $item = Post::find($post);
         $user = User::find($item[0]->user_id)->first();
         $item[0]->user_name = $user->name;
-        if ($post) {
+        if ($item) {
             return response()->json([
-                'data' => $post
+                'data' => $item
             ], 200);
         } else {
             return response()->json([
